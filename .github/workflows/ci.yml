@@ -26,6 +26,7 @@ jobs:
         ./turing ./samples/palindrome_detector_2tapes.tm 0000
         ./turing ./samples/palindrome_detector_2tapes.tm 1101
         ./turing ./samples/palindrome_detector_2tapes.tm 1011
+        ./turing ./samples/gcd.tm 11110111111 -a
         ./turing ./samples/palindrome_detector_2tapes.tm 10f || true
         ./turing ./samples/bug.tm 10f || true
     - name: Test verbose
@@ -34,6 +35,7 @@ jobs:
         ./turing ./samples/palindrome_detector_2tapes.tm 0000 -v
         ./turing ./samples/palindrome_detector_2tapes.tm 1101 -v
         ./turing ./samples/palindrome_detector_2tapes.tm 1011 -v
+        ./turing ./samples/gcd.tm 11110111111 -a -v
         ./turing ./samples/palindrome_detector_2tapes.tm 10f -v || true
         ./turing ./samples/bug.tm 10f -v || true
         

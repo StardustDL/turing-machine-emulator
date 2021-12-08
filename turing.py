@@ -4,12 +4,9 @@ import argparse
 import enum
 import pathlib
 from dataclasses import dataclass, field
-from functools import cmp_to_key
 
 from typing import Dict, List, Optional, Set, Tuple
 from enum import Enum
-
-DEBUG = False
 
 Symbol = str
 State = str
@@ -50,7 +47,9 @@ class RunnerException(Exception):
 class Argument:
     file: pathlib.Path
     input: str
+    auto: bool
     verbose: bool
+    debug: bool
 
 
 @dataclass
@@ -60,6 +59,7 @@ class TransferEdge:
     new: State
     newsyms: List[Symbol]
     dirs: List[Direction]
+    isbreak: bool = False
 
     def __str__(self) -> str:
         return f"({self.old}, {''.join(self.oldsyms)}) -> ({self.new}, {''.join(self.newsyms)}, {''.join((d.name[0] for d in self.dirs))})"
@@ -118,6 +118,36 @@ class TuringMachineDescription:
         print(f"Transfer Edges ({len(self.trans)}):")
         for edge in self.trans:
             print(f"  {edge}")
+
+    def autogen(self):
+        def addState(s: State):
+            if s.startswith("halt"):
+                self.addFinalState(s)
+            self.addState(s)
+
+        def addSymbol(s: Symbol):
+            self.addInputSymbol(s)
+            self.addTapeSymbol(s)
+
+        n = None
+
+        addState(self.initial)
+        addState(self.blank)
+
+        for state in self.finals:
+            addState(state)
+
+        for edge in self.trans:
+            addState(edge.old)
+            addState(edge.new)
+            if n is None:
+                n = self.n = len(edge.oldsyms)
+            for sym in edge.oldsyms:
+                if sym != STAR_SYMBOL:
+                    addSymbol(sym)
+            for sym in edge.newsyms:
+                if sym != STAR_SYMBOL:
+                    addSymbol(sym)
 
     def check(self):
         for state in self.finals:
@@ -205,7 +235,7 @@ class Tape:
 
     def __str__(self) -> str:
         data, _ = self.data()
-        return "".join(data)
+        return "".join(data).strip(self.blank)
 
     def view(self):
         result, index = self.data()
@@ -270,7 +300,7 @@ class Tape:
 
 @dataclass
 class Environment:
-    args: Argument = Argument(pathlib.Path("."), "", False)
+    args: Argument = Argument(pathlib.Path("."), "", False, False, False)
     machine: TuringMachineDescription = TuringMachineDescription()
 
 
@@ -345,7 +375,7 @@ class TuringMachine:
                 self.status = TMStatus.Halt
 
     def step(self) -> bool:
-        matched = []
+        matched: List[Tuple[TransferEdge, int, int]] = []
         trans = self.mappedTrans[self.current]
         transcnt = len(trans)
         for ei, edge in enumerate(trans):
@@ -362,6 +392,7 @@ class TuringMachine:
             if ismatch:
                 matched.append((edge, score, ei))
         matched.sort(key=lambda x: -(x[1] * transcnt + x[2]))
+        edge = None
         if matched:
             edge = matched[0][0]
             for i in range(self.description.n):
@@ -375,9 +406,8 @@ class TuringMachine:
         self.stepcnt += 1
         if env.args.verbose:
             self.view()
-        if DEBUG:
-            # input()
-            pass
+        if env.args.debug and edge is not None and edge.isbreak:
+            input(f"Break point at edge ({edge}): ")
         return True
 
     def shutdown(self):
@@ -395,7 +425,11 @@ def parseArg() -> Argument:
     parser = argparse.ArgumentParser()
     parser.add_argument("file", help="Turing machine description file.")
     parser.add_argument("input", help="Input string.")
+    parser.add_argument("-a", "--auto", help="Automatically generate state set and symbol set by transfer edges (state named 'halt*' is accept state).",
+                        action="store_true")
     parser.add_argument("-v", "--verbose", help="Increase output verbosity",
+                        action="store_true")
+    parser.add_argument("-d", "--debug", help="Debug mode.",
                         action="store_true")
     args = parser.parse_args()
 
@@ -403,7 +437,7 @@ def parseArg() -> Argument:
     if not file.exists() or not file.is_file():
         raise Exception(f"File '{file}' does not exist.")
 
-    return Argument(file, args.input, args.verbose)
+    return Argument(file, args.input, args.auto, args.verbose, args.debug)
 
 
 def parse(text: str) -> TuringMachineDescription:
@@ -472,6 +506,10 @@ def parse(text: str) -> TuringMachineDescription:
             raise ParserException(f"Unknown metadata type '{head}'.")
 
     def parseEdge(line: str):
+        line = line.strip()
+        isbreak = line.endswith("!")
+        if isbreak:
+            line = line[:-1].strip()
         items = [s.strip() for s in line.split(" ") if s.strip()]
         if len(items) != 5:
             raise ParserException(f"Wrong format for transfer edge.")
@@ -482,12 +520,12 @@ def parse(text: str) -> TuringMachineDescription:
                 raise ParserException(f"Unknown direction '{dir}'.")
             rdirs.append(DIRECTION_MAPPING[dir])
         result.addTransferEdge(TransferEdge(
-            old, list(oldsyms), new, list(newsyms), rdirs))
+            old, list(oldsyms), new, list(newsyms), rdirs, isbreak))
 
     lines = [strip(line) for line in text.splitlines()]
-    lines = [line for line in lines if line]
+    lines = [(i, line) for i, line in enumerate(lines) if line]
 
-    for i, line in enumerate(lines):
+    for i, line in lines:
         try:
             if line.startswith("#"):
                 parseMetadata(line)
@@ -501,6 +539,9 @@ def parse(text: str) -> TuringMachineDescription:
             if isinstance(ex, ParserException):
                 raise
             raise ParserException(message)
+
+    if env.args.auto:
+        result.autogen()
 
     try:
         result.check()
@@ -547,7 +588,7 @@ def main():
             print("illegal input")
         exit(1)
     except Exception as ex:
-        if DEBUG:
+        if env.args.debug:
             raise
         else:
             print(type(ex), str(ex))
