@@ -247,6 +247,12 @@ class Tape:
         if tp == len(self.r):
             self.r.append(self.blank)
 
+    def move(self, direction: Direction):
+        if direction == Direction.Left:
+            self.left()
+        elif direction == Direction.Right:
+            self.right()
+
     def write(self, s: Symbol):
         if self.pos < 0:
             tp = abs(self.pos) - 1
@@ -311,6 +317,11 @@ class TuringMachine:
         self.tapes[0].pos = 0
         self.stepcnt = 0
 
+        self.mappedTrans: Dict[State, List[TransferEdge]] = {
+            k: [] for k in self.description.states}
+        for edge in self.description.trans:
+            self.mappedTrans[edge.old].append(edge)
+
     def view(self):
         l = len(f"Index{len(self.tapes)}")
         print("Step".ljust(l), ":", str(self.stepcnt))
@@ -335,10 +346,11 @@ class TuringMachine:
 
     def step(self) -> bool:
         matched = []
-        transcnt = len(self.description.trans)
-        for ei, edge in enumerate(self.description.trans):
-            if edge.old != self.current:
-                continue
+        trans = self.mappedTrans[self.current]
+        transcnt = len(trans)
+        for ei, edge in enumerate(trans):
+            # if edge.old != self.current:
+            #     continue
             ismatch = True
             score = 0
             for i in range(self.description.n):
@@ -356,10 +368,7 @@ class TuringMachine:
                 s, d = edge.newsyms[i], edge.dirs[i]
                 if s != STAR_SYMBOL:
                     self.tapes[i].write(s)
-                if d == Direction.Left:
-                    self.tapes[i].left()
-                elif d == Direction.Right:
-                    self.tapes[i].right()
+                self.tapes[i].move(d)
             self.current = edge.new
         else:
             return False
@@ -541,7 +550,7 @@ def main():
         if DEBUG:
             raise
         else:
-            print(str(ex))
+            print(type(ex), str(ex))
             exit(1)
 
 
