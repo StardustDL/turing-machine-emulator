@@ -18,22 +18,22 @@ jobs:
         persist-credentials: false
     - name: Add execution permission
       run: |
-        mv turing.py turing
-        chmod +x turing
+        mv ./turing.py ./turing
+        chmod +x ./turing
     - name: Test
       run: |
-        turing ./samples/palindrome_detector_2tapes.tm 1111
-        turing ./samples/palindrome_detector_2tapes.tm 0000
-        turing ./samples/palindrome_detector_2tapes.tm 1101
-        turing ./samples/palindrome_detector_2tapes.tm 1011
-        turing ./samples/palindrome_detector_2tapes.tm 10f || true
-        turing ./samples/bug.tm 10f || true
+        ./turing ./samples/palindrome_detector_2tapes.tm 1111
+        ./turing ./samples/palindrome_detector_2tapes.tm 0000
+        ./turing ./samples/palindrome_detector_2tapes.tm 1101
+        ./turing ./samples/palindrome_detector_2tapes.tm 1011
+        ./turing ./samples/palindrome_detector_2tapes.tm 10f || true
+        ./turing ./samples/bug.tm 10f || true
     - name: Test verbose
       run: |
-        turing ./samples/palindrome_detector_2tapes.tm 1111 -v
-        turing ./samples/palindrome_detector_2tapes.tm 0000 -v
-        turing ./samples/palindrome_detector_2tapes.tm 1101 -v
-        turing ./samples/palindrome_detector_2tapes.tm 1011 -v
-        turing ./samples/palindrome_detector_2tapes.tm 10f -v || true
-        turing ./samples/bug.tm 10f -v || true
+        ./turing ./samples/palindrome_detector_2tapes.tm 1111 -v
+        ./turing ./samples/palindrome_detector_2tapes.tm 0000 -v
+        ./turing ./samples/palindrome_detector_2tapes.tm 1101 -v
+        ./turing ./samples/palindrome_detector_2tapes.tm 1011 -v
+        ./turing ./samples/palindrome_detector_2tapes.tm 10f -v || true
+        ./turing ./samples/bug.tm 10f -v || true
         
