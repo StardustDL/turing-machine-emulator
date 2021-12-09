@@ -36,4 +36,5 @@ jobs:
         ./turing ./samples/gcd.tm 11110111111 -a -v
         ./turing ./samples/palindrome_detector_2tapes.tm 10f -v || true
         ./turing ./samples/bug.tm 10f -v || true
-        
+    - name: Batch test
+      run: python3 ./test.py

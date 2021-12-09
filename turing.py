@@ -138,6 +138,9 @@ class TuringMachineDescription:
         for state in self.finals:
             addState(state)
 
+        for sym in self.inputs:
+            self.addTapeSymbol(sym)
+
         for edge in self.trans:
             addState(edge.old)
             addState(edge.new)
@@ -431,7 +434,7 @@ def parseArg() -> Argument:
     parser = argparse.ArgumentParser()
     parser.add_argument("file", help="Turing machine description file.")
     parser.add_argument("input", help="Input string.")
-    parser.add_argument("-a", "--auto", help="Automatically generate state set and symbol set by transfer edges (state named 'halt*' is accept state).",
+    parser.add_argument("-a", "--auto", help="Automatically regenerate state set and symbol set by transfer edges (state named 'halt*' is accept state).",
                         action="store_true")
     parser.add_argument("-v", "--verbose", help="Increase output verbosity",
                         action="store_true")
@@ -479,22 +482,22 @@ def parse(text: str) -> TuringMachineDescription:
 
         if head == "Q":
             items = [l.strip()
-                     for l in tail.lstrip("{").rstrip("}").split(",")]
+                     for l in tail.lstrip("{").rstrip("}").split(",") if l.strip()]
             for item in items:
                 result.addState(item)
         elif head == "S":
             items = [l.strip()
-                     for l in tail.lstrip("{").rstrip("}").split(",")]
+                     for l in tail.lstrip("{").rstrip("}").split(",") if l.strip()]
             for item in items:
                 result.addInputSymbol(item)
         elif head == "G":
             items = [l.strip()
-                     for l in tail.lstrip("{").rstrip("}").split(",")]
+                     for l in tail.lstrip("{").rstrip("}").split(",") if l.strip()]
             for item in items:
                 result.addTapeSymbol(item)
         elif head == "F":
             items = [l.strip()
-                     for l in tail.lstrip("{").rstrip("}").split(",")]
+                     for l in tail.lstrip("{").rstrip("}").split(",") if l.strip()]
             for item in items:
                 result.addFinalState(item)
         elif head == "q0":
@@ -572,6 +575,7 @@ def main():
 
         text = env.args.file.read_text(encoding="utf-8")
         env.machine = parse(text)
+        # env.machine.view()
 
         run()
     except ParserException as ex:
