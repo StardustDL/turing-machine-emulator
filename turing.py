@@ -4,6 +4,7 @@ import argparse
 import enum
 import pathlib
 from dataclasses import dataclass, field
+import sys
 
 from typing import Dict, List, Optional, Set, Tuple
 from enum import Enum
@@ -326,8 +327,6 @@ class TuringMachine:
         self.shutdown()
 
     def start(self, input: str):
-        if env.args.verbose:
-            print(f"Input: {input}")
         errIndex = None
         for i, sym in enumerate(input):
             if sym not in self.description.inputs:
@@ -335,13 +334,18 @@ class TuringMachine:
                 break
         if errIndex is not None:
             self.status = TMStatus.Error
-            message = f"'{input[errIndex]}' was not declared in the set of input symbols"
             if env.args.verbose:
-                print("==================== ERR ====================")
-                print(f"error: {message}")
-                print(f"Input: {input}")
-                print(f"       {' '*errIndex}^")
+                message = "\n".join([f"Input: {input}",
+                                     "==================== ERR ====================",
+                                     f"error: '{input[errIndex]}' was not declared in the set of input symbols",
+                                     f"Input: {input}",
+                                     f"       {' '*errIndex}^"])
+            else:
+                message = "illegal input"
             raise RunnerException(message)
+
+        if env.args.verbose:
+            print(f"Input: {input}")
 
         self.tapes[0].r = list(input)
         self.tapes[0].pos = 0
@@ -414,7 +418,9 @@ class TuringMachine:
         if env.args.verbose:
             if self.status != TMStatus.Error:
                 print(f"Result: {str(self.tapes[0])}")
-            print("==================== END ====================")
+
+            print("==================== END ====================",
+                  file=sys.stderr if self.status == TMStatus.Error else None)
         else:
             if self.status != TMStatus.Error:
                 print(str(self.tapes[0]))
@@ -532,12 +538,7 @@ def parse(text: str) -> TuringMachineDescription:
             else:
                 parseEdge(line)
         except Exception as ex:
-            message = f"Failed to parse line {i+1} '{line}'."
-            if env.args.verbose:
-                print(message)
-                print(f"  {str(ex)}")
-            if isinstance(ex, ParserException):
-                raise
+            message = f"Failed to parse line {i+1} '{line}': {str(ex)}"
             raise ParserException(message)
 
     if env.args.auto:
@@ -546,12 +547,7 @@ def parse(text: str) -> TuringMachineDescription:
     try:
         result.check()
     except Exception as ex:
-        message = f"Failed to check the turing machine."
-        if env.args.verbose:
-            print(message)
-            print(f"  {str(ex)}")
-        if isinstance(ex, ParserException):
-            raise
+        message = f"Failed to check the turing machine: {str(ex)}"
         raise ParserException(message)
 
     # if env.args.verbose:
@@ -562,8 +558,12 @@ def parse(text: str) -> TuringMachineDescription:
 
 def run():
     with TuringMachine(env.machine) as machine:
-        machine.start(env.args.input)
-        machine.run()
+        try:
+            machine.start(env.args.input)
+            machine.run()
+        except RunnerException as ex:
+            print(str(ex), file=sys.stderr)
+            raise
 
 
 def main():
@@ -576,23 +576,19 @@ def main():
         run()
     except ParserException as ex:
         if env.args.verbose:
-            print(f"Parser Error: {str(ex)}")
+            print(f"Parser Error: {str(ex)}", file=sys.stderr)
         else:
-            print("syntax error")
+            print("syntax error", file=sys.stderr)
         exit(1)
     except RunnerException as ex:
-        if env.args.verbose:
-            # print(f"Runner Error: {str(ex)}")
-            pass
-        else:
-            print("illegal input")
         exit(1)
     except Exception as ex:
         if env.args.debug:
             raise
         else:
-            print(type(ex), str(ex))
+            print(type(ex), str(ex), file=sys.stderr)
             exit(1)
+    exit(0)
 
 
 if __name__ == "__main__":
