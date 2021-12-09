@@ -7,6 +7,7 @@
 
 ```sh
 $ cd ./turing-project
+$ chmod +x ./build.sh
 $ bash -c ./build.sh
 ```
 

@@ -17,7 +17,9 @@ jobs:
       with:
         persist-credentials: false
     - name: Build
-      run: bash -c ./build.sh
+      run: |
+        chmod +x ./build.sh
+        bash -c ./build.sh
     - name: Test
       run: |
         ./turing ./samples/palindrome_detector_2tapes.tm 1111
