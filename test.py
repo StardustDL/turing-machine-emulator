@@ -121,7 +121,7 @@ def gcd_all(file="./samples/gcd.tm", auto=True, top=50):
 if __name__ == "__main__":
     bug()
     palindrome()
-    # gcd_all("./samples/gcd2.tm", auto=False, top=10)
+    gcd_all("./samples/gcd2.tm", auto=False, top=10)
     gcd()
-    # gcd("./samples/gcd2.tm", auto=False)
-    # gcd("./samples/gcd2-sim.tm")
+    gcd("./samples/gcd2.tm", auto=False)
+    gcd("./samples/gcd2-sim.tm")
