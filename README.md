@@ -1,4 +1,6 @@
-# Turing Machine Emulator
+![Turing Machine Emulator](https://socialify.git.ci/StardustDL/turing-machine-emulator/image?description=1&font=Bitter&forks=1&issues=1&language=1&owner=1&pulls=1&stargazers=1&theme=Light)
+
+![CI](https://github.com/StardustDL/turing-machine-emulator/workflows/CI/badge.svg) ![](https://img.shields.io/github/license/StardustDL/turing-machine-emulator.svg)
 
 An emulator for multi-tape deterministic turing machine.
 
@@ -10,7 +12,7 @@ Each line of metadata is in form `#<name> = <value>` where `<name>` is the metad
 
 ```
 ; the finite set of states
-#Q = {0,cp,cmp,mh,accept,accept2,accept3,accept4,halt_accept,reject,reject2,reject3,reject4,reject5,halt_reject}
+#Q = {0,cp,cmp,mh,accept,halt_accept,reject,halt_reject}
 
 ; the finite set of input symbols
 #S = {0,1}
@@ -86,9 +88,9 @@ Possible flags:
 - `-d/--debug` Pause the emulator when a breakpoint hits.
 
 ```sh
-$ ./turing ../programs/gcd.tm 11110111111
+$ ./turing ./samples/gcd.tm 11110111111
 11
-$ ./turing ../programs/gcd.tm 11110111111 -v
+$ ./turing ./samples/gcd.tm 11110111111 -v
 Input: 11110111111
 ==================== RUN ====================
 Step   : 0
